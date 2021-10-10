@@ -1,0 +1,50 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+      - id: debug-statements
+        stages: [commit]
+      - id: check-merge-conflict
+        stages: [commit]
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        stages: [commit]
+        files: backend/
+        language_version: python3
+  - repo: https://github.com/pycqa/isort
+    rev: 5.6.4
+    hooks:
+      - id: isort
+        stages: [commit]
+        files: backend/
+  - repo: https://github.com/humitos/mirrors-autoflake.git
+    rev: v1.1
+    hooks:
+      - id: autoflake
+        stages: [commit]
+        args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
+        files: backend/
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v7.32.0
+    hooks:
+      - id: eslint
+        stages: [commit]
+        files: frontend/
+        additional_dependencies:
+          - eslint@4.15.0
+          - eslint-config-google@0.7.1
+          - eslint-loader@1.6.1
+          - eslint-plugin-react@6.10.3
+          - babel-eslint@6.1.2
+          - typescript-eslint
+        exclude: frontend/README.md
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.4.1
+    hooks:
+      - id: prettier
+        stages: [commit]
+        files: frontend/
+        exclude: frontend/README.md
+
