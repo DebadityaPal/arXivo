@@ -76,8 +76,12 @@ class RefreshView(APIView):
         return response
 
 
-class TestView(APIView):
+class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        return Response({"message": "It WorkS!"}, status=status.HTTP_200_OK)
+        response = Response(status=status.HTTP_200_OK)
+        response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE"])
+        response.delete_cookie("refresh_token")
+        response.data = {"Success": "Logged Out Successfully"}
+        return response
