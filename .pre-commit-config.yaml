@@ -33,11 +33,7 @@ repos:
         stages: [commit]
         files: frontend/
         additional_dependencies:
-          - eslint@4.15.0
-          - eslint-config-google@0.7.1
-          - eslint-loader@1.6.1
-          - eslint-plugin-react@6.10.3
-          - babel-eslint@6.1.2
+          - eslint
           - typescript-eslint
         exclude: frontend/README.md
   - repo: https://github.com/pre-commit/mirrors-prettier
