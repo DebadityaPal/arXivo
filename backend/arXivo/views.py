@@ -3,8 +3,10 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.middleware import csrf
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class LoginView(APIView):
@@ -25,7 +27,14 @@ class LoginView(APIView):
                     httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
                     samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
                 )
-
+                response.set_cookie(
+                    key="refresh_token",
+                    value=data["refresh"],
+                    expires=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
+                    secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
+                    httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
+                    samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+                )
                 csrf.get_token(request)
                 response.data = {"Success": "Login successfully", "data": data}
                 return response
@@ -39,3 +48,40 @@ class LoginView(APIView):
                 {"Invalid": "Invalid username or password!!"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+class RefreshView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        refresh = RefreshToken(request.COOKIES.get("refresh_token"))
+        response = Response(status=status.HTTP_200_OK)
+        response.set_cookie(
+            key=settings.SIMPLE_JWT["AUTH_COOKIE"],
+            value=refresh.access_token,
+            expires=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
+            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
+            httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
+            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            expires=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
+            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
+            httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
+            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+        )
+        response.data = {"Success": "Tokens Refreshed Successfully"}
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        response = Response(status=status.HTTP_200_OK)
+        response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE"])
+        response.delete_cookie("refresh_token")
+        response.data = {"Success": "Logged Out Successfully"}
+        return response
