@@ -64,6 +64,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("arXivo.authenticate.CustomAuthentication",),
 }
 
+AUTH_USER_MODEL = "arXivo.arXivoUser"
+
 from datetime import timedelta
 
 SIMPLE_JWT = {
