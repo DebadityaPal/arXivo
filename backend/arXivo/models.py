@@ -3,7 +3,7 @@ from django.db import models
 
 
 class ArXivoUser(AbstractUser):
-    isVerified = models.BooleanField("Verified User", default=False)
+    public_key = models.TextField("Public Key", blank=False, null=False)
     email = models.EmailField("Email Address", blank=False, null=False, unique=True)
 
     def __str__(self):

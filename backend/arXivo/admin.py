@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 
 class ArXivoUserAdmin(UserAdmin):
     model = ArXivoUser
-    list_display = ["email", "username", "isVerified"]
+    list_display = ["email", "username", "public_key"]
 
 
 admin.site.register(ArXivoUser, ArXivoUserAdmin)
