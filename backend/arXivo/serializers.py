@@ -42,3 +42,8 @@ class ArXivoUserSerializer(serializers.Serializer):
         user.set_password(validated_data["password"])
         user.save()
         return user
+
+
+class SearchSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    public_key = serializers.CharField()

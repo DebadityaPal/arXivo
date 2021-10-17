@@ -1,16 +1,15 @@
-from arXivo.serializers import ArXivoUserSerializer
+from arXivo.models import ArXivoUser
+from arXivo.serializers import ArXivoUserSerializer, SearchSerializer
 from arXivo.utils import get_tokens_for_user
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.http.response import JsonResponse
 from django.middleware import csrf
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
-generics.CreateAPIView
 
 
 class RegisterView(APIView):
@@ -105,3 +104,15 @@ class LogoutView(APIView):
         response.delete_cookie("refresh_token")
         response.data = {"Success": "Logged Out Successfully"}
         return response
+
+
+class SearchView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SearchSerializer
+
+    def post(self, request, format=None):
+        users = ArXivoUser.objects.filter(
+            username__icontains=request.data["search_term"]
+        )
+        serializer = self.serializer_class(users, many=True)
+        return JsonResponse({"data": serializer.data}, status=status.HTTP_200_OK)
