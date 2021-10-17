@@ -1,12 +1,32 @@
+from arXivo.serializers import ArXivoUserSerializer
 from arXivo.utils import get_tokens_for_user
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.http.response import JsonResponse
 from django.middleware import csrf
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+generics.CreateAPIView
+
+
+class RegisterView(APIView):
+    serializer_class = ArXivoUserSerializer
+
+    def post(self, request, format=None):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(
+                {"message": "User Created Successfully"}, status=status.HTTP_200_OK
+            )
+        else:
+            return JsonResponse(
+                {"message": "There was an error!"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class LoginView(APIView):
