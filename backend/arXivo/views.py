@@ -24,7 +24,8 @@ class RegisterView(APIView):
             )
         else:
             return JsonResponse(
-                {"message": "There was an error!"}, status=status.HTTP_400_BAD_REQUEST
+                {"message": "There was an error!", "error": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -55,16 +56,16 @@ class LoginView(APIView):
                     samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
                 )
                 csrf.get_token(request)
-                response.data = {"Success": "Login successfully", "data": data}
+                response.data = {"message": "Login successfully", "data": data}
                 return response
             else:
                 return Response(
-                    {"No active": "This account is not active!!"},
+                    {"error": "This account is not active!!"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
             return Response(
-                {"Invalid": "Invalid username or password!!"},
+                {"error": "Invalid username or password!!"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -91,7 +92,7 @@ class RefreshView(APIView):
             httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
             samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
         )
-        response.data = {"Success": "Tokens Refreshed Successfully"}
+        response.data = {"message": "Tokens Refreshed Successfully"}
         return response
 
 
@@ -102,7 +103,7 @@ class LogoutView(APIView):
         response = Response(status=status.HTTP_200_OK)
         response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE"])
         response.delete_cookie("refresh_token")
-        response.data = {"Success": "Logged Out Successfully"}
+        response.data = {"message": "Logged Out Successfully"}
         return response
 
 
