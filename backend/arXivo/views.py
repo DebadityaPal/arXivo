@@ -1,3 +1,5 @@
+import json
+
 from arXivo.models import ArXivoUser
 from arXivo.serializers import ArXivoUserSerializer, SearchSerializer
 from arXivo.utils import get_tokens_for_user
@@ -117,3 +119,45 @@ class SearchView(APIView):
         )
         serializer = self.serializer_class(users, many=True)
         return JsonResponse({"data": serializer.data}, status=status.HTTP_200_OK)
+
+
+class GetNotificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        notif_data = request.user.notification_array
+        notif_pyobj = json.loads(notif_data)["data"]
+
+        for _notif in notif_pyobj:
+            _notif["seen"] = True
+
+        request.user.notification_array = json.dumps({"data": notif_pyobj})
+        request.user.save()
+
+        return JsonResponse(notif_data, status=status.HTTP_200_OK, safe=False)
+
+
+class SendNotificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        other_user = ArXivoUser.objects.filter(
+            username__icontains=request.data["send_to"]
+        )
+        other_user = list(other_user.all())[0]
+        notif_data = {
+            "filename": request.data["filename"],
+            "key": request.data["key"],
+            "time": request.data["time"],
+            "file_type": request.data["file_type"],
+            "seen": False,
+            "sender": request.user.username,
+        }
+        prev_data = json.loads(other_user.notification_array)
+        prev_data["data"].append(notif_data)
+        other_user.notification_array = json.dumps(prev_data)
+        other_user.save()
+        print(other_user.notification_array)
+
+        data = {"reponse": "good_response"}
+        return JsonResponse(data, status=status.HTTP_200_OK)

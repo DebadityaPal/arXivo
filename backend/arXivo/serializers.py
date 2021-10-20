@@ -1,3 +1,5 @@
+import json
+
 from arXivo.models import ArXivoUser
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -40,6 +42,7 @@ class ArXivoUserSerializer(serializers.Serializer):
         )
 
         user.set_password(validated_data["password"])
+        user.notification_array = json.dumps({"data": []})
         user.save()
         return user
 

@@ -7,4 +7,6 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
     path("search/", SearchView.as_view(), name="search"),
+    path("getnotif/", GetNotificationView.as_view(), name="getnotif"),
+    path("sendnotif/", SendNotificationView.as_view(), name="sendnotif"),
 ]
