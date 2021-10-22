@@ -21,6 +21,7 @@ class RegisterView(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            csrf.get_token(request)
             return JsonResponse(
                 {"message": "User Created Successfully"}, status=status.HTTP_200_OK
             )

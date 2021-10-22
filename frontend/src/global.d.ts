@@ -3,6 +3,6 @@
 type User = {
     username: string;
     password: string;
-    email: string;
-    publicKey: string;
+    privateKey: CryptoKey;
+    isAuth: boolean;
 };
