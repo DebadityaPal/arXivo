@@ -8,4 +8,4 @@ class ArXivoUserAdmin(UserAdmin):
     list_display = ["email", "username", "public_key"]
 
 
-admin.site.register(ArXivoUser, ArXivoUserAdmin)
+admin.site.register(ArXivoUser)
