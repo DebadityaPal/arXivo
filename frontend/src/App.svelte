@@ -71,6 +71,24 @@
                 privateKey,
                 isAuth: true,
             });
+            const openRequest = indexedDB.open('KeyStore');
+                openRequest.onupgradeneeded = () => {
+                    let db = openRequest.result;
+                    if (db.objectStoreNames.contains('key')) {
+                        db.deleteObjectStore('key');
+                    }
+
+                    const keyStore = db.createObjectStore('key', { keyPath: 'key' });
+                    keyStore.transaction.oncomplete = () => {
+                        const keyObjectStore = db
+                            .transaction('key', 'readwrite')
+                            .objectStore('key');
+                        keyObjectStore.add({ key: 'pKey', pKey: keys.privateKey});
+                        keyObjectStore.add({ key: 'salt', salt: keys.salt });
+                        keyObjectStore.add({ key: 'iv', iv: keys.iv });
+                    };
+                };
+
             localStorage.setItem('username', username);
             console.log('logged you in!', body);
         } else {
