@@ -8,7 +8,7 @@
     let filename: string = '';
     let receiver: string = '';
     let sendMode: boolean = true;
-    let csrfToken;
+    let csrfToken: string;
 
     onMount(() => {
         csrfToken = document.cookie?.match(new RegExp('(^| )' + 'csrftoken' + '=([^;]+)'))[2];
@@ -34,12 +34,10 @@
             method: 'GET',
             mode: 'cors',
             credentials: 'include',
-        }).then((res) => {
-            res.json().then((data) => {
-                files_received = JSON.parse(data).data;
-                console.log(files_received);
-            });
         });
+        const data = await res.json();
+        files_received = JSON.parse(data).data;
+        console.log(files_received);
     };
 
     const onSubmit = async () => {
@@ -86,7 +84,7 @@
         }
     };
 
-    const fetchFile = async (file_hash, filename) => {
+    const fetchFile = async (file_hash: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
                 new URLSearchParams({
@@ -146,7 +144,12 @@
 {:else}
     <div>
         {#each files_received as file_received}
-            <button on:click={async () => {fetchFile(file_received['key'], file_received['filename'])}}>{file_received['key']}</button>
+            <button
+                on:click={async () =>
+                    await fetchFile(file_received['key'], file_received['filename'])}
+            >
+                {file_received['key']}
+            </button>
         {/each}
     </div>
 {/if}
