@@ -125,7 +125,7 @@ class SearchView(APIView):
 class GetNotificationView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
+    def get(self, request, format=None):
         notif_data = request.user.notification_array
         notif_pyobj = json.loads(notif_data)["data"]
 
@@ -142,14 +142,12 @@ class SendNotificationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        other_user = ArXivoUser.objects.filter(
-            username__icontains=request.data["send_to"]
+        other_user = ArXivoUser.objects.get(
+            username=request.data["send_to"]
         )
-        other_user = list(other_user.all())[0]
         notif_data = {
             "filename": request.data["filename"],
             "key": request.data["key"],
-            "time": request.data["time"],
             "file_type": request.data["file_type"],
             "seen": False,
             "sender": request.user.username,
@@ -158,7 +156,5 @@ class SendNotificationView(APIView):
         prev_data["data"].append(notif_data)
         other_user.notification_array = json.dumps(prev_data)
         other_user.save()
-        print(other_user.notification_array)
-
         data = {"reponse": "good_response"}
         return JsonResponse(data, status=status.HTTP_200_OK)
