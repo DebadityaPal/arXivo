@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import Swal from 'sweetalert2';
+    import { encryptFile, hex2Buffer } from '../utils/crypto';
 
     let file: FileList;
     let files_received: string;
@@ -30,7 +31,7 @@
     };
 
     const fetchNotifications = async () => {
-        const res = await fetch(`http://localhost:8000/getnotif/`, {
+        const res = await fetch('API_URL/getnotif/', {
             method: 'GET',
             mode: 'cors',
             credentials: 'include',
@@ -42,42 +43,77 @@
 
     const onSubmit = async () => {
         try {
-            const body = new FormData();
-            body.append(file[0].name, new Blob([file[0]]), file[0].name);
-            const infuraRes = await fetch('https://ipfs.infura.io:5001/api/v0/add?quieter=true', {
+            const searchRes = await fetch('API_URL/search/', {
                 method: 'POST',
-                body,
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({
+                    search_term: receiver,
+                }),
             });
-            if (infuraRes.ok) {
-                const infuraRef = await infuraRes.json();
-                console.log(infuraRef);
-                const res = await fetch(`http://localhost:8000/sendnotif/`, {
-                    method: 'POST',
-                    mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken,
+            const data = await searchRes.json();
+            if (searchRes.ok) {
+                const fileBuf = await file[0].arrayBuffer();
+                const publicKeyBuf = hex2Buffer(data.data[0].public_key);
+                const publicKey = await crypto.subtle.importKey(
+                    'spki',
+                    publicKeyBuf,
+                    {
+                        name: 'RSA-OAEP',
+                        hash: 'SHA-512',
                     },
-                    body: JSON.stringify({
-                        send_to: receiver,
-                        filename: file[0].name,
-                        key: infuraRef.Hash,
-                        file_type: 'pdf',
-                    }),
-                });
-                if (res.ok) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Uploaded successfully',
+                    false,
+                    ['encrypt'],
+                );
+
+                const [encryptedFile, wrappedKey] = await encryptFile(fileBuf, publicKey);
+
+                const body = new FormData();
+                body.append(file[0].name, new Blob([encryptedFile]), file[0].name);
+                const infuraRes = await fetch(
+                    'https://ipfs.infura.io:5001/api/v0/add?quieter=true',
+                    {
+                        method: 'POST',
+                        body,
+                    },
+                );
+                if (infuraRes.ok) {
+                    const infuraRef = await infuraRes.json();
+                    console.log(infuraRef);
+                    const res = await fetch('API_URL/sendnotif/', {
+                        method: 'POST',
+                        mode: 'cors',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            send_to: receiver,
+                            filename: file[0].name,
+                            key: `${infuraRef.Hash}|${wrappedKey}`,
+                            file_type: 'pdf',
+                        }),
                     });
+                    if (res.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Uploaded successfully',
+                        });
+                    } else {
+                        const r = await res.json();
+                        fireError(`Couldn't Upload file: ${r.error}`);
+                    }
                 } else {
-                    const r = await res.json();
-                    fireError(`Couldn't Upload file: ${r.error}`);
+                    fireError("Couldn't Upload File. Please check your connection");
                 }
             } else {
-                fireError("Couldn't Upload File. Please check your connection");
+                fireError(`Couldn't perform search: ${data}`);
             }
         } catch (err) {
             fireError(err);
@@ -88,7 +124,7 @@
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
                 new URLSearchParams({
-                    arg: file_hash,
+                    arg: file_hash.split('|')[0],
                 }),
             {
                 method: 'POST',
