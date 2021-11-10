@@ -192,37 +192,48 @@
     };
 </script>
 
+<style>
+    
+</style>
+
 <main>
     {#if !$userStore.isAuth}
-        <button on:click={toggleMode}>Toggle</button>
-        {#if loginMode}
-            <form on:submit|preventDefault={onLogin}>
-                <input type="text" bind:value={username} placeholder="Username" required />
-                <input type="password" bind:value={password} placeholder="Password" required />
-                <input
-                    type="file"
-                    accept=".json"
-                    bind:files={keyFile}
-                    placeholder="Key File"
-                    required
-                />
-                <button>Login</button>
-            </form>
-        {:else}
-            <form on:submit|preventDefault={onRegister}>
-                <input type="text" bind:value={username} placeholder="Username" required />
-                <input type="email" bind:value={email} placeholder="Email" required />
-                <input type="password" bind:value={password} placeholder="Password" required />
-                <input
-                    type="password"
-                    bind:value={password2}
-                    placeholder="Confirm Password"
-                    required
-                />
-                <button>Register</button>
-            </form>
-        {/if}
+    
+    <div class="logo">
+        <h1>Archivo</h1>
+        <svg class="logo-img" focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="VpnKeyIcon"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path></svg>
+    </div>
+    <p>A Secure File Sharing Platform</p>
+    <button class="toggle-btn" on:click={toggleMode}>Toggle</button>
+    {#if loginMode}
+        <form on:submit|preventDefault={onLogin}>
+            <input type="text" bind:value={username} placeholder="Username" required />
+            <input type="password" bind:value={password} placeholder="Password" required />
+            <input
+                type="file"
+                accept=".json"
+                bind:files={keyFile}
+                placeholder="Key File"
+                required
+            />
+            <button>Login</button>
+        </form>
     {:else}
-        <Home />
+        <form on:submit|preventDefault={onRegister}>
+            <input type="text" bind:value={username} placeholder="Username" required />
+            <input type="email" bind:value={email} placeholder="Email" required />
+            <input type="password" bind:value={password} placeholder="Password" required />
+            <input
+                type="password"
+                bind:value={password2}
+                placeholder="Confirm Password"
+                required
+            />
+            <button>Register</button>
+        </form>
     {/if}
+{:else}
+    <Home />
+{/if}
+    
 </main>
