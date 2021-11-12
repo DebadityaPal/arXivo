@@ -109,6 +109,39 @@
         }
     };
 
+    const onLogout = async () => {
+        const res = await fetch('API_URL/logout/', {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+        });
+        const body = await res.json();
+        if (res.ok) {
+            userStore.set({
+                username: '',
+                password: '',
+                privateKey: null,
+                isAuth: false,
+            });
+
+            const openRequest = indexedDB.open('KeyStore');
+            openRequest.onsuccess = function () {
+                openRequest.result.close();
+                indexedDB.deleteDatabase('KeyStore');
+            };
+
+            localStorage.removeItem('username');
+            document.cookie = '';
+            console.log('Logged you out!', body);
+        } else {
+            console.error("Couldn't logout", body);
+        }
+    };
+
     const fetchFile = async (fileHash: string, key: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
@@ -140,7 +173,8 @@
     const toggleMode = () => (sendMode = !sendMode);
 </script>
 
-<button on:click={toggleMode} >Toggle</button>
+<button on:click={onLogout}>Logout</button>
+<button on:click={toggleMode}>Toggle</button>
 {#if sendMode}
     <form on:submit|preventDefault={onSubmit}>
         <span> File </span>
@@ -182,5 +216,3 @@
         {/each}
     </div>
 {/if}
-
-
