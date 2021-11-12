@@ -1,10 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { pki } from 'node-forge';
     import Swal from 'sweetalert2';
-    import { encryptFile, hex2Buffer } from '../utils/crypto';
+    import { userStore } from '../stores/auth';
+    import { decryptFile, encryptFile } from '../utils/crypto';
+    import type { Notification } from '../global';
 
     let file: FileList;
-    let files_received: string;
+    let files_received: Array<Notification>;
     let url: string;
     let filename: string = '';
     let receiver: string = '';
@@ -16,7 +19,7 @@
         fetchNotifications();
     });
 
-    const fireError = (err) =>
+    const fireError = (err: string) =>
         Swal.fire({
             title: 'Error!',
             text: err,
@@ -24,11 +27,7 @@
             confirmButtonText: 'Ok',
         });
 
-    const onFileUpload = () => {
-        console.log(file);
-        filename = file[0].name;
-        console.log(filename);
-    };
+    const onFileUpload = () => (filename = file[0].name);
 
     const fetchNotifications = async () => {
         const res = await fetch('API_URL/getnotif/', {
@@ -38,7 +37,6 @@
         });
         const data = await res.json();
         files_received = JSON.parse(data).data;
-        console.log(files_received);
     };
 
     const onSubmit = async () => {
@@ -58,17 +56,7 @@
             const data = await searchRes.json();
             if (searchRes.ok) {
                 const fileBuf = await file[0].arrayBuffer();
-                const publicKeyBuf = hex2Buffer(data.data[0].public_key);
-                const publicKey = await crypto.subtle.importKey(
-                    'spki',
-                    publicKeyBuf,
-                    {
-                        name: 'RSA-OAEP',
-                        hash: 'SHA-512',
-                    },
-                    false,
-                    ['encrypt'],
-                );
+                const publicKey = pki.publicKeyFromPem(data.data[0].public_key);
 
                 const [encryptedFile, wrappedKey] = await encryptFile(fileBuf, publicKey);
 
@@ -95,7 +83,8 @@
                         body: JSON.stringify({
                             send_to: receiver,
                             filename: file[0].name,
-                            key: `${infuraRef.Hash}|${wrappedKey}`,
+                            address: infuraRef.Hash,
+                            key: wrappedKey,
                             file_type: 'pdf',
                         }),
                     });
@@ -120,18 +109,20 @@
         }
     };
 
-    const fetchFile = async (file_hash: string, filename: string) => {
+    const fetchFile = async (fileHash: string, key: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
                 new URLSearchParams({
-                    arg: file_hash.split('|')[0],
+                    arg: fileHash,
                 }),
             {
                 method: 'POST',
             },
         );
         if (infuraRes.ok) {
-            const file = await infuraRes.blob();
+            const encryptedBlob = await infuraRes.blob();
+            const encryptedBuffer = new Uint8Array(await encryptedBlob.arrayBuffer());
+            const file = await decryptFile(encryptedBuffer, key, $userStore.privateKey);
             const blob = new Blob([file], {
                 type: 'application/pdf',
             });
@@ -146,9 +137,7 @@
         }
     };
 
-    const toggleMode = () => {
-        sendMode = !sendMode;
-    };
+    const toggleMode = () => (sendMode = !sendMode);
 </script>
 
 <button on:click={toggleMode}>Toggle</button>
@@ -182,9 +171,13 @@
         {#each files_received as file_received}
             <button
                 on:click={async () =>
-                    await fetchFile(file_received['key'], file_received['filename'])}
+                    await fetchFile(
+                        file_received.address,
+                        file_received.key,
+                        file_received.filename,
+                    )}
             >
-                {file_received['key']}
+                {file_received.filename}
             </button>
         {/each}
     </div>

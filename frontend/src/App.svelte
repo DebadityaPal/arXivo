@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { pki } from 'node-forge';
 
     import Home from './routes/Home.svelte';
     import { userStore } from './stores/auth';
-    import { hex2Buffer, buffer2Hex, genWrappingKey } from './utils/crypto';
 
     let username: string;
     let password: string;
@@ -11,7 +11,7 @@
     let password2: string;
     let keyFile: FileList;
     let loginMode: boolean = true;
-    let csrfToken;
+    let csrfToken: any;
 
     onMount(() => {
         const username = localStorage.getItem('username');
@@ -43,51 +43,28 @@
         if (res.ok) {
             localStorage.setItem('username', username);
             const keys = JSON.parse(await keyFile[0].text());
-            const salt = hex2Buffer(keys.salt);
-            const iv = hex2Buffer(keys.iv);
-            const unwrappingKey = await genWrappingKey(password, salt);
+            const privateKey = pki.decryptRsaPrivateKey(keys.privateKey, password);
 
-            const wrappedKeyBuf = hex2Buffer(keys.privateKey);
-            console.log('wrapped key', wrappedKeyBuf);
-
-            const privateKey = await crypto.subtle.unwrapKey(
-                'jwk',
-                wrappedKeyBuf,
-                unwrappingKey,
-                {
-                    name: 'AES-GCM',
-                    iv,
-                },
-                {
-                    name: 'RSA-OAEP',
-                    hash: { name: 'SHA-512' },
-                },
-                false,
-                ['decrypt'],
-            );
             userStore.set({
                 username,
                 password,
                 privateKey,
                 isAuth: true,
             });
-            const openRequest = indexedDB.open('KeyStore');
-                openRequest.onupgradeneeded = () => {
-                    let db = openRequest.result;
-                    if (db.objectStoreNames.contains('key')) {
-                        db.deleteObjectStore('key');
-                    }
 
-                    const keyStore = db.createObjectStore('key', { keyPath: 'key' });
-                    keyStore.transaction.oncomplete = () => {
-                        const keyObjectStore = db
-                            .transaction('key', 'readwrite')
-                            .objectStore('key');
-                        keyObjectStore.add({ key: 'pKey', pKey: keys.privateKey});
-                        keyObjectStore.add({ key: 'salt', salt: keys.salt });
-                        keyObjectStore.add({ key: 'iv', iv: keys.iv });
-                    };
+            const openRequest = indexedDB.open('KeyStore');
+            openRequest.onupgradeneeded = () => {
+                let db = openRequest.result;
+                if (db.objectStoreNames.contains('key')) {
+                    db.deleteObjectStore('key');
+                }
+
+                const keyStore = db.createObjectStore('key', { keyPath: 'key' });
+                keyStore.transaction.oncomplete = () => {
+                    const keyObjectStore = db.transaction('key', 'readwrite').objectStore('key');
+                    keyObjectStore.add({ key: 'pKey', pKey: keys.privateKey });
                 };
+            };
 
             localStorage.setItem('username', username);
             console.log('logged you in!', body);
@@ -98,19 +75,8 @@
 
     const onRegister = async () => {
         if (password === password2) {
-            let keyPair = await crypto.subtle.generateKey(
-                {
-                    name: 'RSA-OAEP',
-                    modulusLength: 4096,
-                    publicExponent: new Uint8Array([1, 0, 1]),
-                    hash: 'SHA-512',
-                },
-                true,
-                ['encrypt', 'decrypt'],
-            );
-
-            const publicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
-            const publicKeyString = buffer2Hex(publicKey);
+            const keyPair = pki.rsa.generateKeyPair({ bits: 4096 });
+            const publicKeyString = pki.publicKeyToPem(keyPair.publicKey);
 
             const res = await fetch('API_URL/register/', {
                 method: 'POST',
@@ -129,21 +95,7 @@
             });
             const body = await res.json();
             if (res.ok) {
-                const salt = crypto.getRandomValues(new Uint8Array(16));
-                const iv = crypto.getRandomValues(new Uint8Array(16));
-
-                const wrappingKey = await genWrappingKey(password, salt);
-                const wrappedKeyBuf = await crypto.subtle.wrapKey(
-                    'jwk',
-                    keyPair.privateKey,
-                    wrappingKey,
-                    {
-                        name: 'AES-GCM',
-                        iv,
-                    },
-                );
-
-                const wrappedKeyString = buffer2Hex(wrappedKeyBuf);
+                const wrappedKeyString = pki.encryptRsaPrivateKey(keyPair.privateKey, password);
 
                 const openRequest = indexedDB.open('KeyStore');
                 openRequest.onupgradeneeded = () => {
@@ -157,16 +109,11 @@
                         const keyObjectStore = db
                             .transaction('key', 'readwrite')
                             .objectStore('key');
-                        const saltString = buffer2Hex(salt);
-                        const ivString = buffer2Hex(iv);
+
                         keyObjectStore.add({ key: 'pKey', pKey: wrappedKeyString });
-                        keyObjectStore.add({ key: 'salt', salt: saltString });
-                        keyObjectStore.add({ key: 'iv', iv: ivString });
 
                         const keys = JSON.stringify({
                             privateKey: wrappedKeyString,
-                            salt: saltString,
-                            iv: ivString,
                         });
                         const keyBlob = new Blob([keys], { type: 'text/plain' });
                         const url = URL.createObjectURL(keyBlob);

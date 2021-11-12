@@ -142,11 +142,10 @@ class SendNotificationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        other_user = ArXivoUser.objects.get(
-            username=request.data["send_to"]
-        )
+        other_user = ArXivoUser.objects.get(username=request.data["send_to"])
         notif_data = {
             "filename": request.data["filename"],
+            "address": request.data["address"],
             "key": request.data["key"],
             "file_type": request.data["file_type"],
             "seen": False,

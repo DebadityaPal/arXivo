@@ -16,6 +16,7 @@
         "@rollup/plugin-replace": "^3.0.0",
         "@rollup/plugin-typescript": "^8.0.0",
         "@tsconfig/svelte": "^2.0.0",
+        "@types/node-forge": "^0.10.9",
         "@typescript-eslint/eslint-plugin": "^4.33.0",
         "@typescript-eslint/parser": "^4.33.0",
         "eslint": "^7.0.0",
@@ -35,6 +36,7 @@
         "typescript": "^4.0.0"
     },
     "dependencies": {
+        "node-forge": "^0.10.0",
         "sirv-cli": "^1.0.0",
         "sweetalert2": "^11.1.9"
     }
