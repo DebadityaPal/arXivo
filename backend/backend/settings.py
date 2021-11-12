@@ -91,6 +91,8 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
     "AUTH_COOKIE": "access_token",
+    "REFRESH_COOKIE": "refresh_token",
+    "CSRF_COOKIE": "csrftoken",
     "AUTH_COOKIE_DOMAIN": None,
     "AUTH_COOKIE_SECURE": False,
     "AUTH_COOKIE_HTTP_ONLY": True,
