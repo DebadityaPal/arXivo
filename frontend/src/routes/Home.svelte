@@ -140,7 +140,7 @@
     const toggleMode = () => (sendMode = !sendMode);
 </script>
 
-<button on:click={toggleMode}>Toggle</button>
+<button on:click={toggleMode} >Toggle</button>
 {#if sendMode}
     <form on:submit|preventDefault={onSubmit}>
         <span> File </span>
@@ -182,3 +182,5 @@
         {/each}
     </div>
 {/if}
+
+
