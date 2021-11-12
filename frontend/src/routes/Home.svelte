@@ -109,6 +109,72 @@
         }
     };
 
+    const onLogout = async () => {
+        const res = await fetch('API_URL/logout/', {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+        });
+        const body = await res.json();
+        if (res.ok) {
+            userStore.set({
+                username: '',
+                password: '',
+                privateKey: null,
+                isAuth: false,
+            });
+
+            const openRequest = indexedDB.open('KeyStore');
+            openRequest.onsuccess = function () {
+                openRequest.result.close();
+                indexedDB.deleteDatabase('KeyStore');
+            };
+
+            localStorage.removeItem('username');
+            document.cookie = '';
+            console.log('Logged you out!', body);
+        } else {
+            console.error("Couldn't logout", body);
+        }
+    };
+
+    const onFetchFile = async (fileHash: string, key: string, filename: string) => {
+        if ($userStore.privateKey == null) {
+            const { value: password } = await Swal.fire({
+                title: 'Enter your password',
+                input: 'password',
+                inputLabel: 'Password',
+                inputPlaceholder: 'Enter your password',
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    autocorrect: 'off',
+                },
+            });
+            const openRequest = indexedDB.open('KeyStore');
+            openRequest.onsuccess = (dbevent) => {
+                const db = dbevent.target.result;
+                db.transaction('key', 'readonly').objectStore('key').get('pKey').onsuccess = async (
+                    event,
+                ) => {
+                    const privateKey = pki.decryptRsaPrivateKey(event.target.result.pKey, password);
+                    userStore.set({
+                        username: localStorage.getItem('username'),
+                        password,
+                        privateKey,
+                        isAuth: true,
+                    });
+                    await fetchFile(fileHash, key, filename);
+                };
+            };
+        } else {
+            await fetchFile(fileHash, key, filename);
+        }
+    };
+
     const fetchFile = async (fileHash: string, key: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
@@ -140,7 +206,8 @@
     const toggleMode = () => (sendMode = !sendMode);
 </script>
 
-<button on:click={toggleMode} >Toggle</button>
+<button on:click={onLogout}>Logout</button>
+<button on:click={toggleMode}>Toggle</button>
 {#if sendMode}
     <form on:submit|preventDefault={onSubmit}>
         <span> File </span>
@@ -167,11 +234,12 @@
         <input type="submit" value="Submit" />
     </form>
 {:else}
+    <button on:click={fetchNotifications}>REFRESH</button>
     <div>
         {#each files_received as file_received}
             <button
                 on:click={async () =>
-                    await fetchFile(
+                    await onFetchFile(
                         file_received.address,
                         file_received.key,
                         file_received.filename,
@@ -182,5 +250,3 @@
         {/each}
     </div>
 {/if}
-
-
