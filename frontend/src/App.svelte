@@ -154,8 +154,6 @@
             <label class="switch">
                 <input type="checkbox">
                 <span class="slider" on:click={toggleMode}>
-                    <p>Login</p>
-                    <p>Signup</p>
                 </span>
             </label>
             <!-- <button class="toggle-btn" on:click={toggleMode}>Toggle</button> -->
@@ -267,8 +265,9 @@
     .switch {
   position: relative;
   display: inline-block;
-  width: 120px;
+  width: 124px;
   height: 34px;
+  border: 1px solid var(--primary-clr);
     }
 
 /* Hide default HTML checkbox */
@@ -276,6 +275,7 @@
   opacity: 0;
   width: 0;
   height: 0;
+  
 }
 
 /* The slider */
@@ -296,27 +296,48 @@
   transition: .4s;
 }
 
-.slider >p{
-    width: 50px;
-    text-align: center;
-}
-
 .slider:before {
   position: absolute;
-  content: "";
-  height: 26px;
-  width: 50px;
-  left: 5px;
-  bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  content: "Login";
+  height: 32px;
+  width: 62px;
+  left: 1px;
   background-color: var(--primary-clr);
-  -webkit-transition: .4s;
-  transition: .4s;
+  color: var(--secondary-clr);
+  /* -webkit-transition: .4s;
+  transition: .4s; */
 }
 
 input:checked + .slider:before {
   -webkit-transform: translateX(60px);
   -ms-transform: translateX(60px);
   transform: translateX(60px);
+  content: "Register";
+}
+
+.slider:after {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  content: "Register";
+  height: 32px;
+  width: 62px;
+  right: 1px;
+  background-color: var(--secondary-clr);
+  color: var(--primary-clr);
+  /* -webkit-transition: .4s;
+  transition: .4s; */
+}
+
+input:checked + .slider:after {
+  -webkit-transform: translateX(-60px);
+  -ms-transform: translateX(-60px);
+  transform: translateX(-60px);
+  content: "Login";
 }
 
 
