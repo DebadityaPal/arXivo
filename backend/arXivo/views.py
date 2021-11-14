@@ -37,6 +37,12 @@ class LoginView(APIView):
         data = request.data
         response = Response()
         username = data.get("username", None)
+        user = ArXivoUser.objects.filter(username=username)
+        if not user.exists():
+            return Response(
+                {"error": "Username does not exist!!"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         password = data.get("password", None)
         user = authenticate(username=username, password=password)
         if user is not None:
@@ -64,12 +70,12 @@ class LoginView(APIView):
             else:
                 return Response(
                     {"error": "This account is not active!!"},
-                    status=status.HTTP_404_NOT_FOUND,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
         else:
             return Response(
-                {"error": "Invalid username or password!!"},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Invalid Password!!"},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
 

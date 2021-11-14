@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { pki } from 'node-forge';
-
+    import { fireError } from './utils/error';
     import Home from './routes/Home.svelte';
     import { userStore } from './stores/auth';
 
@@ -65,15 +65,20 @@
                     keyObjectStore.add({ key: 'pKey', pKey: keys.privateKey });
                 };
             };
-            console.log('logged you in!', body);
+            // console.log('logged you in!', body);
         } else {
-            console.error("couldn't log you in!", body);
+            // console.error("couldn't log you in!", body);
+            if (body.error != null) {
+                await fireError(`Error : ${body.error}`);
+            } else if (body.error.password != null) {
+                await fireError(`Password : ${body.error.password}`);
+            }
         }
     };
 
     const onRegister = async () => {
         if (password === password2) {
-            const keyPair = pki.rsa.generateKeyPair({ bits: 4096 });
+            const keyPair = pki.rsa.generateKeyPair({ bits: 2048, workers: -1 });
             const publicKeyString = pki.publicKeyToPem(keyPair.publicKey);
 
             const res = await fetch('API_URL/register/', {
@@ -95,40 +100,32 @@
             if (res.ok) {
                 const wrappedKeyString = pki.encryptRsaPrivateKey(keyPair.privateKey, password);
 
-                const openRequest = indexedDB.open('KeyStore');
-                openRequest.onupgradeneeded = () => {
-                    let db = openRequest.result;
-                    if (db.objectStoreNames.contains('key')) {
-                        db.deleteObjectStore('key');
-                    }
-
-                    const keyStore = db.createObjectStore('key', { keyPath: 'key' });
-                    keyStore.transaction.oncomplete = () => {
-                        const keyObjectStore = db
-                            .transaction('key', 'readwrite')
-                            .objectStore('key');
-
-                        keyObjectStore.add({ key: 'pKey', pKey: wrappedKeyString });
-
-                        const keys = JSON.stringify({
-                            privateKey: wrappedKeyString,
-                        });
-                        const keyBlob = new Blob([keys], { type: 'text/plain' });
-                        const url = URL.createObjectURL(keyBlob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'keys.json';
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        URL.revokeObjectURL(url);
-                    };
-                };
+                const keys = JSON.stringify({
+                    privateKey: wrappedKeyString,
+                });
+                const keyBlob = new Blob([keys], { type: 'text/plain' });
+                const url = URL.createObjectURL(keyBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'keys.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
             } else {
-                console.error("couldn't log you in!", body);
+                // console.error("Can't register User!", body);
+                if (body.error.username != null) {
+                    await fireError(`Username : ${body.error.username}`);
+                } else if (body.error.email != null) {
+                    await fireError(`Email : ${body.error.email}`);
+                } else if (body.error.password != null) {
+                    await fireError(`Password : ${body.error.password}`);
+                } else {
+                    await fireError(`Something else went wrong`);
+                }
             }
         } else {
-            console.error("passwords don't match");
+            await fireError("Passwords don't match");
         }
     };
 
