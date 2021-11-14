@@ -138,28 +138,41 @@
 </script>
 
 <main>
-    {#if !$userStore.isAuth}
+    <div class="form-container">
+        {#if !$userStore.isAuth}
         <div class="logo">
-            <h1>Archivo</h1>
-            <svg
-                class="logo-img"
+            
+            <svg class="secondary"
                 focusable="false"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
                 data-testid="VpnKeyIcon"
                 ><path
                     d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
-                /></svg
-            >
+                />
+            </svg>
+            <label class="switch">
+                <input type="checkbox">
+                <span class="slider" on:click={toggleMode}>
+                    <p>Login</p>
+                    <p>Signup</p>
+                </span>
+            </label>
+            <!-- <button class="toggle-btn" on:click={toggleMode}>Toggle</button> -->
         </div>
-        <p>A Secure File Sharing Platform</p>
-        <button class="toggle-btn" on:click={toggleMode}>Toggle</button>
+        <div class="sub-text">
+            <h1 class="secondary">Archivo</h1>
+            <p class="secondary">A Secure File Sharing Platform</p>
+            
+        </div>
+        
         {#if loginMode}
             <form on:submit|preventDefault={onLogin}>
                 <input type="text" bind:value={username} placeholder="Username" required />
                 <input type="password" bind:value={password} placeholder="Password" required />
                 <input
                     type="file"
+                    class="custom-file-input"
                     accept=".json"
                     bind:files={keyFile}
                     placeholder="Key File"
@@ -184,7 +197,127 @@
     {:else}
         <Home />
     {/if}
+    </div>
 </main>
 
 <style>
+    main {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    }
+
+    main >*{
+        width: 40%;
+    }
+
+    .form-container{
+        border: 1px solid var(--secondary-clr);
+        padding: 25px;
+        border-radius: 10px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    form > * {
+        border-radius: 10px;
+        margin: 10px 0px;
+    }
+
+    .secondary{
+        color: var(--secondary-clr);
+        fill: var(--secondary-clr);
+    }
+
+    .logo,.sub-text{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .logo >svg{
+        width: 80px;
+    }
+
+    .custom-file-input{
+        padding: 0;
+        align-items: center;
+    }
+    .custom-file-input::-webkit-file-upload-button {
+    visibility: hidden;
+    }
+    .custom-file-input::before {
+    content: 'Choose A File';
+    display: inline-block;
+    cursor: pointer;
+    font-weight: 700;
+    background-color:var(--secondary-clr); 
+    color: var(--primary-clr); 
+    height: 45px;
+    width: 110px;
+    display: inline-flex;
+    align-items: center;
+    padding-left: 0.4em;
+    }
+
+    .switch {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 34px;
+    }
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    font-weight: 500;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--secondary-clr);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider >p{
+    width: 50px;
+    text-align: center;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 50px;
+  left: 5px;
+  bottom: 4px;
+  background-color: var(--primary-clr);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(60px);
+  -ms-transform: translateX(60px);
+  transform: translateX(60px);
+}
+
+
 </style>

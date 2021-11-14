@@ -51,6 +51,7 @@ textarea {
     border-color: var(--secondary-clr);
     background-color: var(--primary-clr);
     color: var(--secondary-clr);
+    height: 45px;
 }
 
 input:disabled {
@@ -77,33 +78,3 @@ button:focus {
     border-color: #666;
 }
 
-main {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-
-    width: 40%;
-}
-form > * {
-    border-radius: 10px;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-}
-.logo > h1 {
-    margin: 10px;
-}
-.logo-img {
-    fill: var(--secondary-clr);
-    width: 50px;
-    margin-left: 50px;
-}
