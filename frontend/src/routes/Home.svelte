@@ -6,6 +6,7 @@
     import { userStore } from '../stores/auth';
     import { decryptFile, encryptFile } from '../utils/crypto';
     import type { Notification } from '../global';
+    import Loader from '../Loaders.svelte';
 
     let file: FileList;
     let files_received: Array<Notification>;
@@ -14,17 +15,37 @@
     let receiver: string = '';
     let sendMode: boolean = true;
     let csrfToken: string;
+    let searchResults: Array<any> = [];
+    let isLoading: boolean = false;
 
     onMount(() => {
         csrfToken = document.cookie?.match(new RegExp('(^| )' + 'csrftoken' + '=([^;]+)'))[2];
         fetchNotifications();
     });
 
-
+    const onSearch = async () => {
+        const searchRes = await fetch('API_URL/search/', {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                search_term: receiver,
+            }),
+        });
+        const data = await searchRes.json();
+        if (searchRes.ok) {
+            searchResults = data.data;
+        }
+    };
 
     const onFileUpload = () => (filename = file[0].name);
 
     const fetchNotifications = async () => {
+        isLoading = true;
         const res = await fetch('API_URL/getnotif/', {
             method: 'GET',
             mode: 'cors',
@@ -32,76 +53,87 @@
         });
         const data = await res.json();
         files_received = JSON.parse(data).data;
+        isLoading = false;
     };
 
     const onSubmit = async () => {
-        try {
-            const searchRes = await fetch('API_URL/search/', {
-                method: 'POST',
-                mode: 'cors',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                },
-                body: JSON.stringify({
-                    search_term: receiver,
-                }),
-            });
-            const data = await searchRes.json();
-            if (searchRes.ok) {
-                const fileBuf = await file[0].arrayBuffer();
-                const publicKey = pki.publicKeyFromPem(data.data[0].public_key);
-
-                const [encryptedFile, wrappedKey] = await encryptFile(fileBuf, publicKey);
-
-                const body = new FormData();
-                body.append(file[0].name, new Blob([encryptedFile]), file[0].name);
-                const infuraRes = await fetch(
-                    'https://ipfs.infura.io:5001/api/v0/add?quieter=true',
-                    {
-                        method: 'POST',
-                        body,
+        isLoading = true;
+        setTimeout(async () => {
+            try {
+                const searchRes = await fetch('API_URL/search/', {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
                     },
-                );
-                if (infuraRes.ok) {
-                    const infuraRef = await infuraRes.json();
-                    console.log(infuraRef);
-                    const res = await fetch('API_URL/sendnotif/', {
-                        method: 'POST',
-                        mode: 'cors',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken,
+                    body: JSON.stringify({
+                        search_term: receiver,
+                    }),
+                });
+                const data = await searchRes.json();
+                if (searchRes.ok) {
+                    const fileBuf = await file[0].arrayBuffer();
+                    const publicKey = pki.publicKeyFromPem(data.data[0].public_key);
+
+                    const [encryptedFile, wrappedKey] = await encryptFile(fileBuf, publicKey);
+
+                    const body = new FormData();
+                    body.append(file[0].name, new Blob([encryptedFile]), file[0].name);
+                    const infuraRes = await fetch(
+                        'https://ipfs.infura.io:5001/api/v0/add?quieter=true',
+                        {
+                            method: 'POST',
+                            body,
                         },
-                        body: JSON.stringify({
-                            send_to: receiver,
-                            filename: file[0].name,
-                            address: infuraRef.Hash,
-                            key: wrappedKey,
-                            file_type: 'pdf',
-                        }),
-                    });
-                    if (res.ok) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Uploaded successfully',
+                    );
+                    if (infuraRes.ok) {
+                        const infuraRef = await infuraRes.json();
+                        console.log(infuraRef);
+                        const res = await fetch('API_URL/sendnotif/', {
+                            method: 'POST',
+                            mode: 'cors',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                send_to: receiver,
+                                filename: file[0].name,
+                                address: infuraRef.Hash,
+                                key: wrappedKey,
+                                file_type: 'pdf',
+                            }),
                         });
+                        if (res.ok) {
+                            isLoading = false;
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Uploaded successfully',
+                            });
+                        } else {
+                            isLoading = false;
+                            const r = await res.json();
+                            fireError(`Couldn't Upload file: ${r.error}`);
+                        }
                     } else {
-                        const r = await res.json();
-                        fireError(`Couldn't Upload file: ${r.error}`);
+                        isLoading = false;
+                        fireError("Couldn't Upload File. Please check your connection");
                     }
                 } else {
-                    fireError("Couldn't Upload File. Please check your connection");
+                    isLoading = false;
+                    fireError(`Couldn't perform search: ${data}`);
                 }
-            } else {
-                fireError(`Couldn't perform search: ${data}`);
+            } catch (err) {
+                isLoading = false;
+                fireError(err);
+            } finally {
+                isLoading = false;
             }
-        } catch (err) {
-            fireError(err);
-        }
+        }, 0);
     };
 
     const onLogout = async () => {
@@ -138,6 +170,7 @@
     };
 
     const onFetchFile = async (fileHash: string, key: string, filename: string) => {
+        isLoading = true;
         if ($userStore.privateKey == null) {
             const { value: password } = await Swal.fire({
                 title: 'Enter your password',
@@ -162,15 +195,17 @@
                         privateKey,
                         isAuth: true,
                     });
-                    await fetchFile(fileHash, key, filename);
+                    await _fetchFile(fileHash, key, filename);
+                    isLoading = false;
                 };
             };
         } else {
-            await fetchFile(fileHash, key, filename);
+            await _fetchFile(fileHash, key, filename);
+            isLoading = false;
         }
     };
 
-    const fetchFile = async (fileHash: string, key: string, filename: string) => {
+    const _fetchFile = async (fileHash: string, key: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
                 new URLSearchParams({
@@ -201,47 +236,64 @@
     const toggleMode = () => (sendMode = !sendMode);
 </script>
 
-<button on:click={onLogout}>Logout</button>
-<button on:click={toggleMode}>Toggle</button>
-{#if sendMode}
-    <form on:submit|preventDefault={onSubmit}>
-        <span> File </span>
-        <label for="file">
-            {#if filename != ''}
-                {filename.length > 10 ? `${filename.substring(0, 10)}...` : filename}
-            {:else}
-                <div>
-                    <span>Upload</span>
-                </div>
-            {/if}
-        </label>
-
-        <input
-            type="file"
-            id="file"
-            name="file"
-            accept=".pdf"
-            bind:files={file}
-            on:change={onFileUpload}
-            required
-        />
-        <input type="text" id="receiver" name="receiver" bind:value={receiver} required />
-        <input type="submit" value="Submit" />
-    </form>
+{#if isLoading}
+    <Loader stroke="#64ffda" />
 {:else}
-    <button on:click={fetchNotifications}>REFRESH</button>
-    <div>
-        {#each files_received as file_received}
-            <button
-                on:click={async () =>
-                    await onFetchFile(
-                        file_received.address,
-                        file_received.key,
-                        file_received.filename,
-                    )}
-            >
-                {file_received.filename}
-            </button>
-        {/each}
-    </div>
+    <button on:click={onLogout}>Logout</button>
+    <button on:click={toggleMode}>Toggle</button>
+    {#if sendMode}
+        <form on:submit|preventDefault={onSubmit}>
+            <span> File </span>
+            <label for="file">
+                {#if filename != ''}
+                    {filename.length > 10 ? `${filename.substring(0, 10)}...` : filename}
+                {:else}
+                    <div>
+                        <span>Upload</span>
+                    </div>
+                {/if}
+            </label>
+
+            <input
+                type="file"
+                id="file"
+                name="file"
+                accept=".pdf"
+                bind:files={file}
+                on:change={onFileUpload}
+                required
+            />
+            <input
+                list="users"
+                type="text"
+                name="receiver"
+                id="receiver"
+                bind:value={receiver}
+                required
+                on:input={onSearch}
+            />
+            <datalist id="users">
+                {#each searchResults as user}
+                    <option value={user.username} />
+                {/each}
+            </datalist>
+            <input type="submit" value="Submit" />
+        </form>
+    {:else}
+        <button on:click={fetchNotifications}>REFRESH</button>
+        <div>
+            {#each files_received as file_received}
+                <button
+                    on:click={async () =>
+                        await onFetchFile(
+                            file_received.address,
+                            file_received.key,
+                            file_received.filename,
+                        )}
+                >
+                    {file_received.filename}
+                </button>
+            {/each}
+        </div>
+    {/if}
 {/if}
