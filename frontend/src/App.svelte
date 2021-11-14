@@ -4,6 +4,7 @@
     import { fireError } from './utils/error';
     import Home from './routes/Home.svelte';
     import { userStore } from './stores/auth';
+    import Loader from './Loaders.svelte';
 
     let username: string;
     let password: string;
@@ -12,6 +13,7 @@
     let keyFile: FileList;
     let loginMode: boolean = true;
     let csrfToken: any;
+    let isLoading: boolean = false;
 
     onMount(() => {
         const username = localStorage.getItem('username');
@@ -29,6 +31,7 @@
     });
 
     const onLogin = async () => {
+        isLoading = true;
         const res = await fetch('API_URL/login/', {
             method: 'POST',
             mode: 'cors',
@@ -65,8 +68,10 @@
                     keyObjectStore.add({ key: 'pKey', pKey: keys.privateKey });
                 };
             };
+            isLoading = false;
             // console.log('logged you in!', body);
         } else {
+            isLoading = false;
             // console.error("couldn't log you in!", body);
             if (body.error != null) {
                 await fireError(`Error : ${body.error}`);
@@ -77,8 +82,9 @@
     };
 
     const onRegister = async () => {
+        isLoading = true;
         if (password === password2) {
-            const keyPair = pki.rsa.generateKeyPair({ bits: 2048, workers: -1 });
+            const keyPair = pki.rsa.generateKeyPair({ bits: 2048, workers:-1 });
             const publicKeyString = pki.publicKeyToPem(keyPair.publicKey);
 
             const res = await fetch('API_URL/register/', {
@@ -112,7 +118,9 @@
                 a.click();
                 a.remove();
                 URL.revokeObjectURL(url);
+                isLoading = false;
             } else {
+                isLoading = false;
                 // console.error("Can't register User!", body);
                 if (body.error.username != null) {
                     await fireError(`Username : ${body.error.username}`);
@@ -125,6 +133,7 @@
                 }
             }
         } else {
+            isLoading = false;
             await fireError("Passwords don't match");
         }
     };
@@ -135,6 +144,9 @@
 </script>
 
 <main>
+    {#if isLoading}
+        <Loader stroke="#64ffda"/>
+    {:else}
     <div class="form-container">
         {#if !$userStore.isAuth}
         <div class="logo">
@@ -195,6 +207,7 @@
         <Home />
     {/if}
     </div>
+    {/if}
 </main>
 
 <style>
@@ -207,7 +220,7 @@
     }
 
     main >*{
-        width: 40%;
+        width: 20%;
     }
 
     .form-container{

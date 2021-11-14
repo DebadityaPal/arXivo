@@ -6,6 +6,7 @@
     import { userStore } from '../stores/auth';
     import { decryptFile, encryptFile } from '../utils/crypto';
     import type { Notification } from '../global';
+    import Loader from '../Loaders.svelte';
 
     let file: FileList;
     let files_received: Array<Notification>;
@@ -14,17 +15,39 @@
     let receiver: string = '';
     let sendMode: boolean = true;
     let csrfToken: string;
+    let searchResults: Array<any> = [];
+    let isLoading: boolean = false;
 
     onMount(() => {
         csrfToken = document.cookie?.match(new RegExp('(^| )' + 'csrftoken' + '=([^;]+)'))[2];
         fetchNotifications();
     });
 
-
+    const onSearch = async () => {
+        isLoading = true;
+        const searchRes = await fetch('API_URL/search/', {
+                method: 'POST',
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({
+                    search_term: receiver,
+                }),
+            });
+            const data = await searchRes.json();
+            if (searchRes.ok) {
+                searchResults = data.data;
+            }
+            isLoading = false;
+    }
 
     const onFileUpload = () => (filename = file[0].name);
 
     const fetchNotifications = async () => {
+        isLoading = true;
         const res = await fetch('API_URL/getnotif/', {
             method: 'GET',
             mode: 'cors',
@@ -32,10 +55,12 @@
         });
         const data = await res.json();
         files_received = JSON.parse(data).data;
+        isLoading = false;
     };
 
     const onSubmit = async () => {
         try {
+            isLoading = true;
             const searchRes = await fetch('API_URL/search/', {
                 method: 'POST',
                 mode: 'cors',
@@ -84,23 +109,30 @@
                         }),
                     });
                     if (res.ok) {
+                        isLoading = false;
                         Swal.fire({
                             icon: 'success',
                             title: 'Success!',
                             text: 'Uploaded successfully',
                         });
                     } else {
+                        isLoading = false;
                         const r = await res.json();
                         fireError(`Couldn't Upload file: ${r.error}`);
                     }
                 } else {
+                    isLoading = false;
                     fireError("Couldn't Upload File. Please check your connection");
                 }
             } else {
+                isLoading = false;
                 fireError(`Couldn't perform search: ${data}`);
             }
         } catch (err) {
+            isLoading = false;
             fireError(err);
+        } finally{
+            isLoading = false;
         }
     };
 
@@ -138,6 +170,7 @@
     };
 
     const onFetchFile = async (fileHash: string, key: string, filename: string) => {
+        isLoading = true;
         if ($userStore.privateKey == null) {
             const { value: password } = await Swal.fire({
                 title: 'Enter your password',
@@ -162,15 +195,17 @@
                         privateKey,
                         isAuth: true,
                     });
-                    await fetchFile(fileHash, key, filename);
+                    await _fetchFile(fileHash, key, filename);
+                    isLoading = false;
                 };
             };
         } else {
-            await fetchFile(fileHash, key, filename);
+            await _fetchFile(fileHash, key, filename);
+            isLoading = false;
         }
     };
 
-    const fetchFile = async (fileHash: string, key: string, filename: string) => {
+    const _fetchFile = async (fileHash: string, key: string, filename: string) => {
         const infuraRes = await fetch(
             'https://ipfs.infura.io:5001/api/v0/cat?' +
                 new URLSearchParams({
@@ -225,7 +260,12 @@
             on:change={onFileUpload}
             required
         />
-        <input type="text" id="receiver" name="receiver" bind:value={receiver} required />
+        <input list="users" type="text" name="receiver" id="receiver" bind:value={receiver} required on:input={onSearch}/>
+        <datalist id="users">
+            {#each searchResults as user}
+                <option value={user.username}/>
+            {/each}
+        </datalist>
         <input type="submit" value="Submit" />
     </form>
 {:else}
