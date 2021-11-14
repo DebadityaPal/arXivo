@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { pki } from 'node-forge';
     import Swal from 'sweetalert2';
+    import { fireError } from '../utils/error';
     import { userStore } from '../stores/auth';
     import { decryptFile, encryptFile } from '../utils/crypto';
     import type { Notification } from '../global';
@@ -19,13 +20,7 @@
         fetchNotifications();
     });
 
-    const fireError = (err: string) =>
-        Swal.fire({
-            title: 'Error!',
-            text: err,
-            icon: 'error',
-            confirmButtonText: 'Ok',
-        });
+
 
     const onFileUpload = () => (filename = file[0].name);
 

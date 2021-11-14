@@ -32,6 +32,11 @@ class ArXivoUserSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"password": "Password fields didn't match."}
             )
+        other_user = ArXivoUser.objects.filter(username=attrs["username"])
+        if other_user.exists():
+            raise serializers.ValidationError(
+                {"username": "This username already exists."}
+            )
         return attrs
 
     def create(self, validated_data):
