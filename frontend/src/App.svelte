@@ -171,7 +171,7 @@
                     <!-- <button class="toggle-btn" on:click={toggleMode}>Toggle</button> -->
                 </div>
                 <div class="sub-text">
-                    <h1 class="secondary">Archivo</h1>
+                    <h1 class="secondary">ArXivo</h1>
                     <p class="secondary">A Secure File Sharing Platform</p>
                 </div>
 
@@ -340,8 +340,9 @@
         background-color: var(--secondary-clr);
         color: var(--primary-clr);
         /* -webkit-transition: .4s;
-  transition: .4s; */
+        transition: .4s; */
     }
+
     input:checked + .slider:after {
         -webkit-transform: translateX(-60px);
         -ms-transform: translateX(-60px);

@@ -239,23 +239,37 @@
 {#if isLoading}
     <Loader stroke="#64ffda" />
 {:else}
-    <button on:click={onLogout}>Logout</button>
-    <button on:click={toggleMode}>Toggle</button>
+    <div class="buttons">
+        <!-- <button on:click={toggleMode}>Toggle</button> -->
+        <label class="switch">
+            <input type="checkbox" />
+            <span class="slider" on:click={toggleMode}>
+            </span>
+        </label>
+        <button class="logout" on:click={onLogout}>Logout</button>
+    </div>
+    
     {#if sendMode}
         <form on:submit|preventDefault={onSubmit}>
-            <span> File </span>
-            <label for="file">
-                {#if filename != ''}
-                    {filename.length > 10 ? `${filename.substring(0, 10)}...` : filename}
-                {:else}
-                    <div>
-                        <span>Upload</span>
-                    </div>
-                {/if}
-            </label>
+            <div class="files">
+                <div class="filename">
+                    <span> File </span>
+                </div>
+                
+                <label for="file">
+                    {#if filename != ''}
+                        {filename.length > 10 ? `${filename.substring(0, 10)}...` : filename}
+                    {:else}
+                        <div class="filename">
+                            <span>Upload</span>
+                        </div>
+                    {/if}
+                </label>
+            </div>
 
             <input
                 type="file"
+                class="custom-file-input"
                 id="file"
                 name="file"
                 accept=".pdf"
@@ -268,6 +282,7 @@
                 type="text"
                 name="receiver"
                 id="receiver"
+                placeholder="Select User"
                 bind:value={receiver}
                 required
                 on:input={onSearch}
@@ -277,23 +292,195 @@
                     <option value={user.username} />
                 {/each}
             </datalist>
-            <input type="submit" value="Submit" />
+            <input type="submit" value="Send File" />
         </form>
     {:else}
-        <button on:click={fetchNotifications}>REFRESH</button>
+        <div class="refresh-button common" on:click={fetchNotifications}>
+            <button >Refresh</button>
+            <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="RefreshIcon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
+        </div>
         <div>
             {#each files_received as file_received}
+            <div class="files common">
+                <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="InsertDriveFileIcon"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"></path></svg>
                 <button
-                    on:click={async () =>
-                        await onFetchFile(
-                            file_received.address,
-                            file_received.key,
-                            file_received.filename,
-                        )}
-                >
-                    {file_received.filename}
-                </button>
+                on:click={async () =>
+                    await onFetchFile(
+                        file_received.address,
+                        file_received.key,
+                        file_received.filename,
+                    )}
+            >
+                {file_received.filename}
+            </button>
+            </div>
+               
             {/each}
         </div>
     {/if}
 {/if}
+
+<style>
+
+    form{
+        display: flex;
+        flex-direction: column;
+    }
+    label{
+        color: var(--secondary-clr);
+    }
+
+    ::-webkit-input-placeholder { /* Edge */
+        color: var(--secondary-clr);
+    }
+
+    .buttons{
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    button{
+        background-color: var(--secondary-clr);
+        color: var(--primary-clr);
+        cursor: pointer;
+    }
+
+    .files{
+        display: flex;
+        margin-bottom: 10px;
+    }
+    .filename{
+        margin-right: 20px;
+        color: var(--secondary-clr);
+    }
+    .custom-file-input {
+        padding: 0;
+        align-items: center;
+    }
+    .custom-file-input::-webkit-file-upload-button {
+        visibility: hidden;
+    }
+    .custom-file-input::before {
+        content: 'Choose A File';
+        display: inline-block;
+        cursor: pointer;
+        font-weight: 700;
+        background-color: var(--secondary-clr);
+        color: var(--primary-clr);
+        height: 45px;
+        width: 110px;
+        bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        padding-left: 0.4em;
+    }
+
+    input[type="submit"]{
+        cursor: pointer;
+        background-color: var(--secondary-clr);
+        color: var(--primary-clr);
+        font-weight: 500;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 146px;
+        height: 34px;
+        border: 1px solid var(--primary-clr);
+    }
+    /* Hide default HTML checkbox */
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    /* The slider */
+    .slider {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px;
+        font-weight: 500;
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--secondary-clr);
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+    }
+    .slider:before {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        content: 'Send';
+        height: 31px;
+        width: 72px;
+        left: 1px;
+        background-color: var(--primary-clr);
+        color: var(--secondary-clr);
+        /* -webkit-transition: .4s;
+  transition: .4s; */
+    }
+    input:checked + .slider:before {
+        -webkit-transform: translateX(72px);
+        -ms-transform: translateX(72px);
+        transform: translateX(72px);
+        content: 'Received';
+    }
+    .slider:after {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        content: 'Received';
+        height: 31px;
+        width: 72px;
+        right: 0px;
+        background-color: var(--secondary-clr);
+        color: var(--primary-clr);
+        /* -webkit-transition: .4s;
+  transition: .4s; */
+    }
+    input:checked + .slider:after {
+        -webkit-transform: translateX(-72px);
+        -ms-transform: translateX(-72px);
+        transform: translateX(-72px);
+        content: 'Send';
+    }
+
+    .refresh-button{
+        width: fit-content;
+        margin-bottom: 10px;        
+    }
+    .common >svg{
+        width: 40px;
+        fill:var(--secondary-clr)
+    }
+
+    .common >button{
+        background-color: inherit;
+        color: inherit;
+        border: none;
+    }
+
+    .common{
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        background-color: var(--primary-clr);
+        color: var(--secondary-clr);
+        border: 1px solid var(--secondary-clr);
+    }
+    .files{
+        width: 100%;
+    }
+
+    .logout{
+        height:34px;
+    }
+</style>
