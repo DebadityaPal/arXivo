@@ -300,22 +300,44 @@
             <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="RefreshIcon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
         </div>
         <div>
+            <table>
+                <tr>
+                  <th>Filename</th>
+                  <th>Sent by</th>
+                  <th>File type</th>
+                  <th>Seen</th>
+                </tr>
+            
             {#each files_received as file_received}
-            <div class="files common">
-                <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="InsertDriveFileIcon"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"></path></svg>
-                <button
-                on:click={async () =>
-                    await onFetchFile(
-                        file_received.address,
-                        file_received.key,
-                        file_received.filename,
-                    )}
-            >
-                {file_received.filename}
-            </button>
-            </div>
+
+            <tr>
+                <td><div class="files common">
+                    <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="InsertDriveFileIcon"><path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"></path></svg>
+                    <button
+                    on:click={async () =>
+                        await onFetchFile(
+                            file_received.address,
+                            file_received.key,
+                            file_received.filename,
+                        )}
+                >
+                    {file_received.filename}
+                </button>
+                </div></td>
+                <td>{file_received.sender}</td>
+                <td>{file_received.file_type}</td>
+                <td>
+                    {#if file_received.seen}
+                        <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiBox-root css-1om0hkc" focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="CheckBoxIcon"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                    {:else}
+                        <svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiBox-root css-1om0hkc" focusable="false" viewBox="0 0 24 24" aria-hidden="true" data-testid="CheckBoxIcon"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                    {/if}
+                </td>
+              </tr>
+            
                
             {/each}
+        </table>
         </div>
     {/if}
 {/if}
@@ -466,6 +488,7 @@
         background-color: inherit;
         color: inherit;
         border: none;
+        text-align: start;
     }
 
     .common{
@@ -474,7 +497,6 @@
         align-items: center;
         background-color: var(--primary-clr);
         color: var(--secondary-clr);
-        border: 1px solid var(--secondary-clr);
     }
     .files{
         width: 100%;
@@ -482,5 +504,21 @@
 
     .logout{
         height:34px;
+    }
+
+    table{
+        border-collapse: collapse;
+        color: var(--secondary-clr);
+        width: 100%;
+    }
+    td,th{
+        border: 1px solid var(--secondary-clr);
+        padding: 5px;
+        align-items: center;
+        text-align: center;
+    }
+
+    td > svg{
+        fill: var(--secondary-clr);
     }
 </style>

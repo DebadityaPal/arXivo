@@ -229,7 +229,7 @@
         justify-content: center;
     }
     main > * {
-        width: 40%;
+        width: 45%;
     }
     .form-container {
         border: 1px solid var(--secondary-clr);
