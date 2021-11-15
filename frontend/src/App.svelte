@@ -16,10 +16,10 @@
     let isLoading: boolean = false;
 
     onMount(() => {
-        const username = localStorage.getItem('username');
+        let u = localStorage.getItem('username');
         csrfToken = document.cookie?.match(new RegExp('(^| )' + 'csrftoken' + '=([^;]+)'));
 
-        if (username !== null && csrfToken !== null) {
+        if (u !== null && csrfToken !== null) {
             csrfToken = csrfToken[2];
             userStore.set({
                 username,
@@ -54,6 +54,11 @@
                 privateKey,
                 isAuth: true,
             });
+
+            username = '';
+            password = '';
+            password2 = '';
+            keyFile = null;
 
             const openRequest = indexedDB.open('KeyStore');
             openRequest.onupgradeneeded = () => {
@@ -177,11 +182,18 @@
 
                 {#if loginMode}
                     <form on:submit|preventDefault={onLogin}>
-                        <input type="text" bind:value={username} placeholder="Username" required />
+                        <input
+                            type="text"
+                            id="username_login"
+                            bind:value={username}
+                            placeholder="Username"
+                            required
+                        />
                         <input
                             type="password"
                             bind:value={password}
                             placeholder="Password"
+                            id="password_login"
                             required
                         />
                         <input
@@ -196,18 +208,26 @@
                     </form>
                 {:else}
                     <form on:submit|preventDefault={onRegister}>
-                        <input type="text" bind:value={username} placeholder="Username" required />
+                        <input
+                            type="text"
+                            bind:value={username}
+                            id="username_register"
+                            placeholder="Username"
+                            required
+                        />
                         <input type="email" bind:value={email} placeholder="Email" required />
                         <input
                             type="password"
                             bind:value={password}
                             placeholder="Password"
+                            id="password_register"
                             required
                         />
                         <input
                             type="password"
                             bind:value={password2}
                             placeholder="Confirm Password"
+                            id="password2_register"
                             required
                         />
                         <button>Register</button>
