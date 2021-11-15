@@ -35,8 +35,8 @@ export const encryptFile = async (
 
     pbkdf2DerivedBytes = new Uint8Array(pbkdf2DerivedBytes);
 
-    const keyBytes: ArrayBuffer = pbkdf2DerivedBytes.slice(0, 32);
-    const ivBytes: ArrayBuffer = pbkdf2DerivedBytes.slice(32);
+    const keyBytes: ArrayBuffer = pbkdf2DerivedBytes.slice(32);
+    const ivBytes: ArrayBuffer = pbkdf2DerivedBytes.slice(0, 32);
 
     const encryptionKey: CryptoKey = await crypto.subtle.importKey(
         'raw',
@@ -58,7 +58,7 @@ export const encryptFile = async (
     encryptedFile.set(salt, 8);
     encryptedFile.set(encryptedByteArr, 16);
 
-    const encryptedKey = key.encrypt(password);
+    const encryptedKey = key.encrypt(password, 'RSA-OAEP');
 
     return [encryptedFile, encryptedKey];
 };
@@ -69,7 +69,7 @@ export const decryptFile = async (
     privateKey: forge.pki.rsa.PrivateKey,
 ): Promise<ArrayBuffer> => {
     const encoder = new TextEncoder();
-    const decryptedPassword = privateKey.decrypt(encryptedKey);
+    const decryptedPassword = privateKey.decrypt(encryptedKey, 'RSA-OAEP');
     const pbkdf2Salt = file.slice(8, 16);
     const passwordKey = await crypto.subtle.importKey(
         'raw',
@@ -91,8 +91,8 @@ export const decryptFile = async (
     );
 
     pbkdf2Bytes = new Uint8Array(pbkdf2Bytes);
-    const keyBytes = pbkdf2Bytes.slice(0, 32);
-    const ivBytes = pbkdf2Bytes.slice(32);
+    const keyBytes = pbkdf2Bytes.slice(32);
+    const ivBytes = pbkdf2Bytes.slice(0, 32);
     const encryptedBytes = file.slice(16);
 
     const decryptionKey = await crypto.subtle.importKey(
