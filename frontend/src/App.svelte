@@ -281,7 +281,7 @@
     .switch {
         position: relative;
         display: inline-block;
-        width: 124px;
+        width: 136px;
         height: 34px;
         border: 1px solid var(--primary-clr);
     }
@@ -315,7 +315,7 @@
         justify-content: center;
         content: 'Login';
         height: 32px;
-        width: 62px;
+        width: 67px;
         left: 1px;
         background-color: var(--primary-clr);
         color: var(--secondary-clr);
@@ -323,9 +323,9 @@
   transition: .4s; */
     }
     input:checked + .slider:before {
-        -webkit-transform: translateX(60px);
-        -ms-transform: translateX(60px);
-        transform: translateX(60px);
+        -webkit-transform: translateX(67px);
+        -ms-transform: translateX(67px);
+        transform: translateX(67px);
         content: 'Register';
     }
     .slider:after {
@@ -335,7 +335,7 @@
         justify-content: center;
         content: 'Register';
         height: 32px;
-        width: 62px;
+        width: 67px;
         right: 1px;
         background-color: var(--secondary-clr);
         color: var(--primary-clr);
@@ -344,9 +344,20 @@
     }
 
     input:checked + .slider:after {
-        -webkit-transform: translateX(-60px);
-        -ms-transform: translateX(-60px);
-        transform: translateX(-60px);
+        -webkit-transform: translateX(-67px);
+        -ms-transform: translateX(-67px);
+        transform: translateX(-67px);
         content: 'Login';
+        padding-left: 1px;
+    }
+
+    @media only screen and (max-width: 768px) {
+  /* For mobile phones: */
+    main > * {
+        width: 80%;
+    }
+
+    
+        
     }
 </style>

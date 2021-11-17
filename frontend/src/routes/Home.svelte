@@ -547,5 +547,6 @@
 
     td > svg {
         fill: var(--secondary-clr);
-    }
+        width: 30px;
+    }    
 </style>
