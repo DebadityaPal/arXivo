@@ -185,11 +185,14 @@
             });
             const openRequest = indexedDB.open('KeyStore');
             openRequest.onsuccess = (dbevent) => {
-                const db = dbevent.target.result;
+                const db = (dbevent.target as IDBOpenDBRequest).result;
                 db.transaction('key', 'readonly').objectStore('key').get('pKey').onsuccess = async (
                     event,
                 ) => {
-                    const privateKey = pki.decryptRsaPrivateKey(event.target.result.pKey, password);
+                    const privateKey = pki.decryptRsaPrivateKey(
+                        (event.target as IDBOpenDBRequest).result.pKey,
+                        password,
+                    );
                     userStore.set({
                         username: localStorage.getItem('username'),
                         password,
